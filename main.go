@@ -21,51 +21,56 @@ type Recipe struct {
 }
 
 func main() {
-	folderPath := "./example_files" // Replace with your folder path
+	folderPath := "./example_files" // TODO: make configurable
 
-	err := processMarkdownFiles(folderPath)
+	recipes, err := processMarkdownFiles(folderPath)
 	if err != nil {
-		fmt.Printf("Error processing markdown files: %v\n", err)
+		fmt.Printf("error processing markdown files: %v\n", err)
 	}
+
+	fmt.Printf("Recipes found: %v\n", len(recipes))
 }
 
-func processMarkdownFiles(folderPath string) error {
+func processMarkdownFiles(folderPath string) ([]Recipe, error) {
 	files, err := os.ReadDir(folderPath)
 	if err != nil {
-		return fmt.Errorf("Error reading directory: %v", err)
+		return nil, fmt.Errorf("error reading directory: %v", err)
 	}
 
+	recipes := make([]Recipe, 0)
 	for _, file := range files {
 		if !file.IsDir() && strings.HasSuffix(file.Name(), ".md") {
 			filePath := filepath.Join(folderPath, file.Name())
-			err := processMarkdownFile(filePath)
+			recipe, err := processMarkdownFile(filePath)
 			if err != nil {
-				fmt.Printf("Error processing file %s: %v\n", file.Name(), err)
+				return nil, fmt.Errorf("error processing file %s: %v\n", file.Name(), err)
 			}
+
+			recipes = append(recipes, *recipe)
 		}
 	}
 
-	return nil
+	return recipes, nil
 }
 
-func processMarkdownFile(filePath string) error {
+func processMarkdownFile(filePath string) (*Recipe, error) {
 	content, err := os.ReadFile(filePath)
 	if err != nil {
-		return fmt.Errorf("Error reading file: %v", err)
+		return nil, fmt.Errorf("error reading file: %v", err)
 	}
 
 	base := filepath.Base(filePath)
 	name := strings.TrimSuffix(base, filepath.Ext(base))
 	fmt.Printf("Processing file: %s\n", name)
 
-	properties, err := getFrontMatter(content)
+	frontMatter, err := getFrontMatter(content)
 	if err != nil {
-		return fmt.Errorf("Error extracting properties: %v", err)
+		return nil, fmt.Errorf("error extracting properties: %v", err)
 	}
 
-	fmt.Printf("Tags found: %v\n", properties.Tags)
+	recipe := Recipe{name: name, frontMatter: frontMatter}
 
-	return nil
+	return &recipe, nil
 }
 
 func getFrontMatter(content []byte) (FrontMatter, error) {
