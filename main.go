@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
@@ -29,6 +30,25 @@ func main() {
 	}
 
 	fmt.Printf("Recipes found: %v\n", len(recipes))
+
+	fmt.Printf("Your weely menu: \n")
+	weekMeny := selectRandomRecipes(recipes, 7)
+	for i, r := range weekMeny {
+		fmt.Printf("%v: %s\n", i+1, r.name)
+	}
+}
+
+func selectRandomRecipes(recipes []Recipe, n int) []Recipe {
+	temp := make([]Recipe, len(recipes))
+	copy(temp, recipes)
+
+	// Fisher-Yates shuffle 👯
+	for i := 0; i < n; i++ {
+		j := rand.Intn(len(temp)-i) + i
+		temp[i], temp[j] = temp[j], temp[i]
+	}
+
+	return temp[:n]
 }
 
 func processMarkdownFiles(folderPath string) ([]Recipe, error) {
